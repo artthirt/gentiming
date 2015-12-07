@@ -3,6 +3,8 @@
 #include <iostream>
 #include <time.h>
 
+#include "gpiorw.h"
+
 #include <boost/thread.hpp>
 
 using namespace std;
@@ -79,6 +81,15 @@ gpiopin::gpiopin(uint _impulse_usec, uint _period_usec, int _pin)
 	}
 
 	pin = _pin;
+
+	if(!gpiorw::instance().open_pin(pin)){
+		cout << "pin " << pin << " not opened\n";
+	}
+}
+
+gpiopin::~gpiopin()
+{
+
 }
 
 gpiopin &gpiopin::operator=(const gpiopin &cp)

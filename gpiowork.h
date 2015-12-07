@@ -19,6 +19,8 @@ public:
 	gpiopin(const gpiopin& cp);
 	gpiopin(uint _impulse_usec, uint _period_usec, int _pin);
 
+	~gpiopin();
+
 	gpiopin& operator= (const gpiopin& cp);
 
 	void operator () ();
