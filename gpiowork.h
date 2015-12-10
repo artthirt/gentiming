@@ -6,6 +6,8 @@
 #include <mutex>
 #include <boost/thread.hpp>
 
+#include "utils.h"
+
 namespace gpio{
 
 class gpiopin{
