@@ -25,7 +25,7 @@ public:
 
 	gpiopin& operator= (const gpiopin& cp);
 
-	void operator () ();
+	void run();
 
 	boost::thread thread;
 
@@ -49,8 +49,8 @@ public:
 	void swap_case();
 
 private:
-	void sleep_one();
-	void sleep_zero();
+	void set_one();
+	void set_zero();
 };
 
 class gpiowork
@@ -68,7 +68,7 @@ public:
 	bool open_pin(int pin, float impulse, float meandr);
 	void close();
 
-	void operator() ();
+	void run();
 private:
 	std::map< int, gpiopin > m_mappin;
 	bool m_done;

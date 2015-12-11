@@ -103,6 +103,8 @@ bool gpiorw::write_to_gpio_custom(int pin, const string &key, const string &valu
 
 bool gpiorw::write_to_gpio_custom(int pin, const string &key, const int value)
 {
+	if(!contains(pin))
+		return false;
 	stringstream ss;
 	ss << value;
 	return write_to_gpio_custom(pin, key, ss.str());
@@ -110,6 +112,8 @@ bool gpiorw::write_to_gpio_custom(int pin, const string &key, const int value)
 
 bool gpiorw::write_to_pin(int pin, bool value)
 {
+	if(!contains(pin))
+		return false;
 	return write_to_gpio_custom(pin, "value", value);
 }
 

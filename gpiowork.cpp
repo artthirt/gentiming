@@ -68,7 +68,7 @@ gpiopin &gpiopin::operator=(const gpiopin &cp)
 	return *this;
 }
 
-void gpio::gpiopin::operator ()()
+void gpio::gpiopin::run()
 {
 	int64_t tm1, tm2;
 	int id;
@@ -76,12 +76,12 @@ void gpio::gpiopin::operator ()()
 		tm1 = get_curtime_usec();
 		switch (cur_case) {
 			case ONE:
-				sleep_one();
+				set_one();
 				id = 1;
 				break;
 			case ZERO:
 			default:
-				sleep_zero();
+				set_zero();
 				id = 0;
 				break;
 		}
@@ -143,13 +143,17 @@ uint gpiopin::delay() const
 	}
 }
 
-void gpiopin::sleep_one()
+void gpiopin::set_one()
 {
+	/// 1 >> pin/value
+	gpio::gpiorw::instance().write_to_pin(pin, true);
 	_usleep(impulse_usec);
 }
 
-void gpiopin::sleep_zero()
+void gpiopin::set_zero()
 {
+	/// 0 >> pin/value
+	gpio::gpiorw::instance().write_to_pin(pin, false);
 	_usleep(delay_zero());
 }
 
@@ -166,7 +170,7 @@ bool gpiowork::open_pin(int pin, float impulse, float meandr)
 	if(m_mappin.find(pin) == m_mappin.end()){
 		m_mappin[pin] = gpiopin(impulse * usec_in_msec, meandr * usec_in_msec, pin);
 
-		m_mappin[pin].thread = thread(m_mappin[pin]);
+		m_mappin[pin].thread = thread(boost::bind(&gpiopin::run, &m_mappin[pin]));
 
 	}else{
 		m_mappin[pin].set_data(impulse * usec_in_msec, meandr * usec_in_msec);
@@ -183,7 +187,7 @@ void gpiowork::close()
 	}
 }
 
-void gpiowork::operator()()
+void gpiowork::run()
 {
 	while(!m_done){
 		_msleep(100);

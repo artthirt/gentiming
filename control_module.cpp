@@ -11,7 +11,7 @@ using namespace boost::asio::ip;
 control_module::control_module()
 	: m_host("0.0.0.0")
 	, m_port(7777)
-	, m_sender_port(0)
+	, m_remote_port(0)
 	, m_socket(0)
 	, m_done(false)
 {
@@ -25,8 +25,18 @@ control_module::~control_module()
 
 void control_module::set_address(const std::__cxx11::string &address, ushort port)
 {
+	if(!m_socket){
+		cout << "socket not created\n";
+		return;
+	}
+
 	m_host = address;
 	m_port = port;
+
+	m_socket->close();
+	m_socket->open(udp::v4());
+
+	m_socket->bind(udp::endpoint(boost::asio::ip::address::from_string(address), port));
 }
 
 std::string control_module::host() const
@@ -39,14 +49,14 @@ ushort control_module::port() const
 	return m_port;
 }
 
-std::string control_module::sender_host() const
+std::string control_module::remote_host() const
 {
-	return m_sender_host;
+	return m_remote_host;
 }
 
-ushort control_module::sender_port() const
+ushort control_module::remote_port() const
 {
-	return m_sender_port;
+	return m_remote_port;
 }
 
 void control_module::close()
@@ -63,23 +73,40 @@ void control_module::run()
 	start_receive();
 
 	m_io.run();
+
+	cout << "control_module stop\n";
+}
+
+std::vector<char> control_module::packet() const
+{
+	return m_packet;
 }
 
 void control_module::handleReceive(const boost::system::error_code &error, size_t size)
 {
+	size_t available = m_socket->available();
+	m_buffer.resize(available);
+
+	size_t packetSize = m_socket->receive_from(boost::asio::buffer(m_buffer, available), m_remote_endpoint);
+	m_remote_host = m_remote_endpoint.address().to_string();
+	m_remote_port = m_remote_endpoint.port();
+
+	m_packet.resize(packetSize);
+	std::copy(m_buffer.begin(), m_buffer.begin() + packetSize, m_packet.begin());
+
 	stringstream ss;
-	for(size_t i = 0; i < std::min(size, (size_t)10); i++){
-		ss << (uint)m_buffer[i] << ", ";
+	for(size_t i = 0; i < std::min(packetSize, (size_t)10); i++){
+		ss << (uint)m_packet[i] << ", ";
 	}
 
-	cout << "byte received: " << size << "; error code: " << error << endl;
-	cout << "buffer size: " << m_buffer.size() << " data: [" << ss.str() << "..]" << endl;
+	cout << "byte received: " << packetSize << "; error code: " << error;
+	cout << "; packet size: " << m_packet.size() << " data: [" << ss.str() << "..]" << endl;
 	start_receive();
 }
 
 void control_module::start_receive()
 {
-	m_socket->async_receive_from(boost::asio::buffer(m_buffer), m_remote_endpoint,
+	m_socket->async_receive_from(boost::asio::null_buffers(), m_remote_endpoint,
 								 boost::bind(&control_module::handleReceive, this,
 											 boost::asio::placeholders::error,
 											 boost::asio::placeholders::bytes_transferred));
