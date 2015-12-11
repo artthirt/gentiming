@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "struct_controls/struct_controls.h"
+
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
 
@@ -40,6 +42,7 @@ private:
 	std::vector< char > m_buffer;
 	std::vector< char > m_packet;
 	bool m_done;
+	sc::StructControls m_sc;
 
 	boost::asio::ip::udp::socket *m_socket;
 	boost::asio::ip::udp::endpoint m_remote_endpoint;

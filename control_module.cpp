@@ -2,6 +2,8 @@
 
 #include <boost/bind.hpp>
 
+#include "struct_controls/struct_controls.h"
+
 #include "utils.h"
 #include <sstream>
 
@@ -15,6 +17,22 @@ control_module::control_module()
 	, m_socket(0)
 	, m_done(false)
 {
+//	datastream stream(&m_packet);
+
+//	m_sc.bank = 45;
+//	m_sc.servo_ctrl.flag_start = true;
+//	m_sc.tangaj = 30;
+//	m_sc.power_on = true;
+//	m_sc.servo_ctrl.pin = 3;
+
+//	m_sc.write_to(stream);
+
+//	sc::StructControls scc;
+
+//	datastream ostream(m_packet);
+//	scc.read_from(ostream);
+
+//	cout << "size sc " << m_packet.size() << "\n";
 }
 
 control_module::~control_module()
