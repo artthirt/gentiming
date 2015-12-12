@@ -37,8 +37,6 @@ protected:
 private:
 	std::string m_host;
 	ushort m_port;
-	std::string m_remote_host;
-	ushort m_remote_port;
 	std::vector< char > m_buffer;
 	std::vector< char > m_packet;
 	bool m_done;

@@ -13,7 +13,6 @@ using namespace boost::asio::ip;
 control_module::control_module()
 	: m_host("0.0.0.0")
 	, m_port(7777)
-	, m_remote_port(0)
 	, m_socket(0)
 	, m_done(false)
 {
@@ -69,12 +68,12 @@ ushort control_module::port() const
 
 std::string control_module::remote_host() const
 {
-	return m_remote_host;
+	return m_remote_endpoint.address().to_string();
 }
 
 ushort control_module::remote_port() const
 {
-	return m_remote_port;
+	return m_remote_endpoint.port();
 }
 
 void control_module::close()
@@ -106,8 +105,6 @@ void control_module::handleReceive(const boost::system::error_code &error, size_
 	m_buffer.resize(available);
 
 	size_t packetSize = m_socket->receive_from(boost::asio::buffer(m_buffer, available), m_remote_endpoint);
-	m_remote_host = m_remote_endpoint.address().to_string();
-	m_remote_port = m_remote_endpoint.port();
 
 	m_packet.resize(packetSize);
 	std::copy(m_buffer.begin(), m_buffer.begin() + packetSize, m_packet.begin());
