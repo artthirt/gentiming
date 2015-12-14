@@ -8,9 +8,19 @@ aux_source_directory(. SRC_LIST)
 #file(GLOB_RECURSE SRC_LIST ${PROJECT_SOURCE_DIR}/*.cpp)
 
 file(GLOB SRC_LIST_SC ${PROJECT_SOURCE_DIR}/struct_controls/*.cpp)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/struct_controls)
+file(GLOB SRC_LIST_U ${PROJECT_SOURCE_DIR}/utils/*.cpp)
+file(GLOB SRC_LIST_SNS ${PROJECT_SOURCE_DIR}/sensors/*.cpp)
+file(GLOB SRC_LIST_GP ${PROJECT_SOURCE_DIR}/gpio/*.cpp)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST} ${SRC_LIST_SC})
+add_executable(${PROJECT_NAME} ${SRC_LIST} ${SRC_LIST_SC} ${SRC_LIST_U} ${SRC_LIST_SNS} ${SRC_LIST_GP})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+	./
+	struct_controls/
+	utils/
+	sensors/
+	gpio/
+)
 
 set(CMAKE_BUILD_TYPE Debug)
 

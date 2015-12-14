@@ -10,6 +10,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
+#include <boost/signals2.hpp>
 
 #include <boost/asio/basic_socket_streambuf.hpp>
 
@@ -42,6 +43,8 @@ public:
 	void set_barometer(int data, int64_t time);
 	void set_temperature(int temp);
 
+	/// for signals //////////
+	boost::signals2::signal< void () > sigctrl;
 
 protected:
 	void handleReceive(const boost::system::error_code& error,
@@ -50,6 +53,7 @@ protected:
 	void send_data();
 	void write_handler(const boost::system::error_code& error, // Result of operation.
 					   std::size_t bytes_transferred);
+	void analyze_data();
 
 private:
 	std::string m_host;
@@ -58,10 +62,12 @@ private:
 	std::vector< char > m_packet;
 	bool m_done;
 	sc::StructControls m_sc;
+	sc::StructControls m_last_sc;
 	sc::StructTelemetry m_data_send;
 	sc::StructGyroscope m_config_gyroscope;
 	std::mutex m_mutex;
 	int64_t m_last_send_data;
+	bool m_start_send;
 
 	boost::asio::ip::udp::socket *m_socket;
 	boost::asio::ip::udp::endpoint m_remote_endpoint;

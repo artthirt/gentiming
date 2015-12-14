@@ -6,6 +6,10 @@
 
 /////////////////////////////////////
 
+#define GETID(b1, b2, b3, b4) (u_int)(((u_char)(b1) << 24) | ((u_char)(b2) << 16) | ( (u_char)(b3) << 8) | (u_char)(b4))
+
+/////////////////////////////////////
+
 const uint default_freq				= 50;
 const uint usec_in_sec				= 1000000;
 const uint msec_in_sec				= 1000;

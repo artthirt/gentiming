@@ -7,6 +7,7 @@
 #include <boost/thread.hpp>
 
 #include "utils.h"
+#include "struct_controls.h"
 
 class control_module;
 
@@ -29,17 +30,6 @@ public:
 
 	void run();
 
-	boost::thread thread;
-
-	bool done;
-	uint impulse_usec;
-	uint period_usec;
-	int pin;
-	CASE cur_case;
-	long long last_time;
-
-	int64_t counter;
-
 	uint delay() const;
 	uint delay_zero() const;
 
@@ -49,6 +39,20 @@ public:
 	void setPeriod(const uint &value);
 
 	void swap_case();
+
+public:
+	boost::thread thread;
+
+public:
+
+	bool done;
+	uint impulse_usec;
+	uint period_usec;
+	int pin;
+	CASE cur_case;
+	long long last_time;
+
+	int64_t counter;
 
 private:
 	void set_one();
@@ -72,12 +76,15 @@ public:
 	void set_control_module(control_module* cm);
 
 	void run();
+
+	void handler_signal();
 private:
 	std::map< int, gpiopin > m_mappin;
 	bool m_done;
 	control_module *m_control_module;
 
 	void check_pins();
+	void control_pins();
 };
 
 }

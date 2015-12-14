@@ -4,12 +4,15 @@
 #include <time.h>
 
 #include "gpiorw.h"
+#include "struct_controls.h"
+#include "control_module.h"
 
 #include <boost/thread.hpp>
 
 using namespace std;
 using namespace gpio;
 using namespace boost;
+using namespace sc;
 
 gpiopin::gpiopin()
 	: impulse_usec(0)
@@ -196,6 +199,7 @@ void gpiowork::set_control_module(control_module *cm)
 void gpiowork::run()
 {
 	while(!m_done){
+		control_pins();
 		_msleep(100);
 	}
 	check_pins();
@@ -207,4 +211,25 @@ void gpiowork::check_pins()
 		gpiopin& pin = it->second;
 		pin.thread.join();
 	}
+}
+
+void gpiowork::control_pins()
+{
+	/// empty
+}
+
+void gpiowork::handler_signal()
+{
+	if(!m_control_module)
+		return;
+
+	const sc::StructControls &sc = m_control_module->control_params();
+
+	int pin = sc.servo_ctrl.pin;
+	if(m_mappin.find(pin) == m_mappin.end()){
+		return;
+	}
+
+	gpiopin &gpin = m_mappin[pin];
+
 }

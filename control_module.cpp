@@ -20,6 +20,7 @@ control_module::control_module()
 	, m_port(7777)
 	, m_socket(0)
 	, m_done(false)
+	, m_start_send(false)
 {
 //	datastream stream(&m_packet);
 
@@ -122,6 +123,8 @@ void control_module::handleReceive(const boost::system::error_code &error, size_
 		ss << (uint)m_packet[i] << ", ";
 	}
 
+	analyze_data();
+
 	cout << "byte received: " << packetSize << "; error code: " << error;
 	cout << "; packet size: " << m_packet.size() << " data: [" << ss.str() << "..]" << endl;
 	start_receive();
@@ -129,6 +132,9 @@ void control_module::handleReceive(const boost::system::error_code &error, size_
 
 void control_module::send_data()
 {
+	if(!m_start_send)
+		return;
+
 	int64_t elapsed = get_curtime_msec();
 	if(elapsed - m_last_send_data < minimum_delay_for_send){
 		return;
@@ -148,6 +154,31 @@ void control_module::send_data()
 void control_module::write_handler(const boost::system::error_code &error, size_t bytes_transferred)
 {
 	cout << "bytes send: " << bytes_transferred << endl;
+}
+
+void control_module::analyze_data()
+{
+	datastream stream(m_packet);
+	char symb[5] = { 0 };
+	if(m_packet.size() < 6){
+		std::string ssymb(m_packet.data());
+		if(ssymb == "START"){
+			m_start_send = true;
+			return;
+		}
+		if(ssymb == "STOP"){
+			m_start_send = false;
+			return;
+		}
+	}else{
+		stream.readRawData(symb, 4);
+		if(std::string(symb) == "CTRL"){
+			m_last_sc = m_sc;
+			m_sc.read_from(stream);
+
+			sigctrl();	/// signal
+		}
+	}
 }
 
 void control_module::start_receive()
