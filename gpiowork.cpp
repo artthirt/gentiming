@@ -161,6 +161,7 @@ void gpiopin::set_zero()
 
 gpiowork::gpiowork()
 	: m_done(false)
+	, m_control_module(0)
 {
 
 }
@@ -185,6 +186,11 @@ void gpiowork::close()
 	for(auto it = m_mappin.begin(); it != m_mappin.end(); it++){
 		it->second.done = true;
 	}
+}
+
+void gpiowork::set_control_module(control_module *cm)
+{
+	m_control_module = cm;
 }
 
 void gpiowork::run()

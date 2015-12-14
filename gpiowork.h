@@ -8,6 +8,8 @@
 
 #include "utils.h"
 
+class control_module;
+
 namespace gpio{
 
 class gpiopin{
@@ -67,11 +69,13 @@ public:
 	 */
 	bool open_pin(int pin, float impulse, float meandr);
 	void close();
+	void set_control_module(control_module* cm);
 
 	void run();
 private:
 	std::map< int, gpiopin > m_mappin;
 	bool m_done;
+	control_module *m_control_module;
 
 	void check_pins();
 };
