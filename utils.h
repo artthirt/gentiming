@@ -15,6 +15,7 @@ const uint nsec_in_usec				= 1000;
 //////////////////////////////////////
 
 std::int64_t get_curtime_usec();
+std::int64_t get_curtime_msec();
 void _usleep(uint usec);
 void _msleep(uint msec);
 

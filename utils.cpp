@@ -9,6 +9,12 @@ int64_t get_curtime_usec()
 	return (tm.tv_nsec + (tm.tv_sec * 1e+9))/1000;
 }
 
+int64_t get_curtime_msec()
+{
+	int64_t msec = get_curtime_usec();
+	return msec / 1000;
+}
+
 void _usleep(uint usec)
 {
 	timespec tm;
@@ -24,4 +30,3 @@ void _msleep(uint msec)
 	tm.tv_sec = (msec) / msec_in_sec;
 	clock_nanosleep(CLOCK_MONOTONIC, 0, &tm, 0);
 }
-
