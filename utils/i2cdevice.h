@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <mutex>
 
 class Device{
 public:
@@ -25,6 +26,7 @@ private:
 	int m_ref;
 	std::string m_name;
 	std::vector< u_char > m_write_data;
+	static std::mutex m_mutex;
 	bool m_opened;
 
 	mutable int m_dev;

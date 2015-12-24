@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <mutex>
 
 namespace gpio{
 
@@ -89,6 +90,7 @@ public:
 
 private:
 	std::map< int, std::string > m_open_pins;
+	std::mutex m_mutex;
 
 	static gpiorw m_instance;
 

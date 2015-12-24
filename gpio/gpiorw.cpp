@@ -28,9 +28,11 @@ bool gpiorw::open_pin(int pin)
 		return true;
 	}
 
+	m_mutex.lock();
 	ofstream file(gpio_export.c_str());
 
 	if(!file.is_open()){
+		m_mutex.unlock();
 		cout << "pin " << pin << " not initialize" << endl;
 		return false;
 	}
@@ -38,6 +40,8 @@ bool gpiorw::open_pin(int pin)
 	file << pin;
 
 	file.close();
+
+	m_mutex.unlock();
 
 	m_open_pins[pin] = path_pin(pin);
 
@@ -50,9 +54,12 @@ bool gpiorw::close_pin(int pin)
 		return true;
 	}
 
+	m_mutex.lock();
+
 	ofstream file(gpio_unexport.c_str());
 
 	if(!file.is_open()){
+		m_mutex.unlock();
 		cout << "pin " << pin << " not closed" << endl;
 		return false;
 	}
@@ -60,6 +67,8 @@ bool gpiorw::close_pin(int pin)
 	file << pin;
 
 	file.close();
+
+	m_mutex.unlock();
 
 	m_open_pins.erase(pin);
 
@@ -70,9 +79,12 @@ bool gpiorw::write_to_file(const string &sfile, const string &value)
 {
 	stringstream ssv;
 
+	m_mutex.lock();
+
 	ofstream file(sfile.c_str());
 
 	if(!file.is_open()){
+		m_mutex.unlock();
 		return false;
 	}
 
@@ -81,6 +93,8 @@ bool gpiorw::write_to_file(const string &sfile, const string &value)
 	file.write(ssv.str().c_str(), ssv.str().size());
 
 	file.close();
+
+	m_mutex.unlock();
 
 	return true;
 
@@ -122,9 +136,12 @@ int gpiorw::read_from_pin(int pin)
 
 	string path = path_pin(pin) + "/value";
 
+	m_mutex.lock();
+
 	ifstream file(path);
 
 	if(!file.is_open()){
+		m_mutex.unlock();
 		cout <<  "not readed pin" << endl;
 		return -1;
 	}
@@ -134,6 +151,8 @@ int gpiorw::read_from_pin(int pin)
 	file >> value;
 
 	file.close();
+
+	m_mutex.unlock();
 
 	return value;
 }

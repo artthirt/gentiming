@@ -46,7 +46,7 @@ control_module::~control_module()
 		delete m_socket;
 }
 
-void control_module::set_address(const std::__cxx11::string &address, ushort port)
+void control_module::set_address(const std::string &address, ushort port)
 {
 	if(!m_socket){
 		cout << "socket not created\n";

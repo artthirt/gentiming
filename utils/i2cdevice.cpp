@@ -11,6 +11,8 @@
 
 /////////////////////////////////////////////
 
+std::mutex Device::m_mutex;
+
 Device::Device()
 {
 	m_ref = 0;
@@ -42,7 +44,9 @@ bool Device::open()
 		addRef();
 		return true;
 	}
+	m_mutex.lock();
 	m_dev = ::open(m_name.c_str(), O_RDWR);
+	m_mutex.unlock();
 
 	if(m_dev != -1){
 		addRef();
@@ -64,7 +68,9 @@ void Device::close()
 	m_ref--;
 	std::cout << "close. ref=" << m_ref << std::endl;
 	if(m_ref <= 0){
+		m_mutex.lock();
 		::close(m_dev);
+		m_mutex.unlock();
 		std::cout << "device '" << m_name << "' closed" << std::endl;
 		m_ref = 0;
 		m_dev = 0;
@@ -79,12 +85,18 @@ int Device::dev() const
 
 int Device::set_addr(unsigned char addr)
 {
-	return ioctl(m_dev, I2C_SLAVE, addr);
+	m_mutex.lock();
+	int res = ioctl(m_dev, I2C_SLAVE, addr);
+	m_mutex.unlock();
+	return res;
 }
 
 int Device::set_param(int param, int value)
 {
-	return ioctl(m_dev, param, value);
+	m_mutex.lock();
+	int res = ioctl(m_dev, param, value);
+	m_mutex.unlock();
+	return res;
 }
 
 int Device::write(unsigned char addr, unsigned char *data, int len)
@@ -98,16 +110,25 @@ int Device::write(unsigned char addr, unsigned char *data, int len)
 		std::copy(data, data + len, &m_write_data[1]);
 	}
 
-	return ::write(m_dev, &m_write_data.front(), m_write_data.size());
+	m_mutex.lock();
+	int res = ::write(m_dev, &m_write_data.front(), m_write_data.size());
+	m_mutex.unlock();
+
+	return res;
 }
 
 int Device::read(unsigned char addr, unsigned char *data, int len)
 {
 	if(!m_dev || !data || !len)
 		return -1;
+	m_mutex.lock();
 	int res = ::write(m_dev, &addr, 1);
-	if(res >= 0)
+	m_mutex.unlock();
+	if(res >= 0){
+		m_mutex.lock();
 		res = ::read(m_dev, data, len);
+		m_mutex.unlock();
+	}
 	return res;
 }
 

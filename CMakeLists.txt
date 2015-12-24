@@ -22,7 +22,18 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 	gpio/
 )
 
-set(CMAKE_BUILD_TYPE Debug)
+if(BUILD_ARM)
+	set(CMAKE_C_COMPILER arm-linux-gnueabihf-gcc)
+	set(CMAKE_CXX_COMPILER arm-linux-gnueabihf-c++)
+	include_directories(/opt/crosstools/boost/include)
+#	link_directories(/opt/crosstools/boost/lib/)
+#	set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/crosstools/boost/lib/)
+#	message(STATUS "libpath: ${CMAKE_LIBRARY_PATH}")
+	set(LIBS -L"/opt/crosstools/boost/lib/")
+else()
+	set(CMAKE_BUILD_TYPE Debug)
+endif()
+
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -37,7 +48,7 @@ else()
 	message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-target_link_libraries(gentiming boost_thread boost_system rt)
+target_link_libraries(gentiming ${LIBS} -lboost_system -lboost_thread rt -lpthread)
 
 if(WITHOUT_QT)
 	message(STATUS "qt off")
