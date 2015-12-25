@@ -12,7 +12,6 @@ public:
 	compasswork();
 
 	void init();
-	void get_data();
 	void set_control_module(control_module* cm);
 	void close();
 
@@ -23,6 +22,11 @@ private:
 	control_module* m_control_module;
 	bool m_done;
 	u_char m_regA_hmc5883;
+	/**
+	 * @brief get_data
+	 * general function for read data
+	 */
+	void get_data();
 };
 
 #endif // COMPASSWORK_H

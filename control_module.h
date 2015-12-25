@@ -35,16 +35,46 @@ public:
 
 	sc::StructGyroscope config_gyroscope() const;
 	sc::StructControls control_params() const;
+	/**
+	 * @brief set_config_gyroscope
+	 * @param telem
+	 */
 	void set_config_gyroscope(const sc::StructGyroscope& telem);
+	/**
+	 * @brief set_port_receiver
+	 * @param port
+	 */
 	void set_port_receiver(ushort port);
+	/**
+	 * @brief set_gyroscope
+	 * @param gyroscope
+	 * @param accelerometer
+	 * @param temp
+	 * @param time
+	 */
 	void set_gyroscope(const vector3_::Vector3i& gyroscope,
 					   const vector3_::Vector3i& accelerometer, float temp, int64_t time);
+	/**
+	 * @brief set_compass
+	 * @param compass
+	 * @param mode
+	 * @param time
+	 */
 	void set_compass(const vector3_::Vector3i& compass, u_char mode, int64_t time);
+	/**
+	 * @brief set_barometer
+	 * @param data
+	 * @param time
+	 */
 	void set_barometer(int data, int64_t time);
+	/**
+	 * @brief set_temperature
+	 * @param temp
+	 */
 	void set_temperature(int temp);
 
 	/// for signals //////////
-	boost::signals2::signal< void () > sigctrl;
+	boost::signals2::signal< void (const sc::StructControls&) > sigctrl;
 
 protected:
 	void handleReceive(const boost::system::error_code& error,

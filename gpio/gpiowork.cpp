@@ -202,7 +202,6 @@ void gpiopin::set_zero()
 
 gpiowork::gpiowork()
 	: m_done(false)
-	, m_control_module(0)
 {
 
 }
@@ -237,11 +236,6 @@ void gpiowork::close()
 	}
 }
 
-void gpiowork::set_control_module(control_module *cm)
-{
-	m_control_module = cm;
-}
-
 void gpiowork::run()
 {
 	while(!m_done){
@@ -273,13 +267,8 @@ void gpiowork::control_pins()
 	/// empty
 }
 
-void gpiowork::handler_signal()
+void gpiowork::handler_signal(const StructControls &sc)
 {
-	if(!m_control_module)
-		return;
-
-	const sc::StructControls &sc = m_control_module->control_params();
-
 	int pin = sc.servo_ctrl.pin;
 	float imp = get_impulse(sc.servo_ctrl.angle);
 	float meandr = sc.servo_ctrl.freq_meandr;

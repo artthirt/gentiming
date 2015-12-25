@@ -12,7 +12,6 @@ public:
 	barowork();
 
 	void init();
-	void get_data();
 	void set_control_module(control_module* cm);
 	void close();
 
@@ -38,6 +37,11 @@ private:
 
 	void write_baro_get_temp();
 	void read_baro_get_temp();
+	/**
+	 * @brief get_data
+	 * general function for read data
+	 */
+	void get_data();
 };
 
 #endif // BAROWORK_H

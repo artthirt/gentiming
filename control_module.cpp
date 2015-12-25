@@ -176,7 +176,7 @@ void control_module::analyze_data()
 			m_last_sc = m_sc;
 			m_sc.read_from(stream);
 
-			sigctrl();	/// signal
+			sigctrl(m_sc);	/// signal
 		}
 	}
 }

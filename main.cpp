@@ -18,10 +18,9 @@ int main()
 	compasswork cwork;
 	barowork bwork;
 
-	cm.sigctrl.connect(boost::bind(&gpio::gpiowork::handler_signal, &gpiowrk));
+	cm.sigctrl.connect(boost::bind(&gpio::gpiowork::handler_signal, &gpiowrk, _1));
 
 	gwork.set_control_module(&cm);
-	gpiowrk.set_control_module(&cm);
 	cwork.set_control_module(&cm);
 	bwork.set_control_module(&cm);
 

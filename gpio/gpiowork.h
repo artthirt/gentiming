@@ -76,15 +76,13 @@ public:
 	bool open_pin(int pin, float impulse, float meandr);
 	void close(int pin);
 	void close();
-	void set_control_module(control_module* cm);
 
 	void run();
 
-	void handler_signal();
+	void handler_signal(const sc::StructControls& sc);
 private:
 	std::map< int, gpiopin > m_mappin;
 	bool m_done;
-	control_module *m_control_module;
 
 	void check_pins();
 	void control_pins();

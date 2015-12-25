@@ -18,9 +18,9 @@ const uint nsec_in_usec				= 1000;
 
 //////////////////////////////////////
 
-const u_char addr_mpu6050 = 0x68;
-const u_char addr_hmp5883 = 0x1E;
-const u_char addr_bmp180 = 0x77;
+const u_char addr_mpu6050 = 0x68;		/// gyroscope
+const u_char addr_hmp5883 = 0x1E;		/// magnetometer
+const u_char addr_bmp180 = 0x77;		/// barometer
 
 ///////////////////////////////////////
 
