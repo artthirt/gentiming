@@ -46,11 +46,13 @@ public:
 public:
 
 	bool done;
+	bool exited;
 	uint impulse_usec;
 	uint period_usec;
 	int pin;
 	CASE cur_case;
 	long long last_time;
+	long long start_time;
 
 	int64_t counter;
 
@@ -72,6 +74,7 @@ public:
 	 * @return
 	 */
 	bool open_pin(int pin, float impulse, float meandr);
+	void close(int pin);
 	void close();
 	void set_control_module(control_module* cm);
 

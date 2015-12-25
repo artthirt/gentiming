@@ -14,13 +14,42 @@ using namespace gpio;
 using namespace boost;
 using namespace sc;
 
+//////////////////////////////
+
+const float min_impulse = 1.;
+const float min_angle = -180.;
+
+const float max_impulse = 2.;
+const float max_angle = 180.;
+
+/**
+ * @brief get_impulse
+ * generate impulse for servo sg90
+ * @param angle
+ * @return - impulse in milliseconds
+ */
+float get_impulse(float angle)
+{
+	float delta = max_impulse - min_impulse;
+	float delta_angle = (max_angle - min_angle);
+	float res = angle - min_angle;
+	res /= delta_angle;
+	res = min_impulse + res * delta;
+	return res;
+}
+
+//////////////////////////////
+
 gpiopin::gpiopin()
 	: impulse_usec(0)
 	, period_usec(0)
 	, pin(-1)
 	, done(false)
+	, exited(false)
 	, cur_case(ONE)
 	, counter(0)
+	, start_time(0)
+	, last_time(0)
 {
 
 }
@@ -31,14 +60,20 @@ gpiopin::gpiopin(const gpiopin &cp)
 	period_usec = cp.period_usec;
 	pin = cp.pin;
 	cur_case = cp.cur_case;
+	start_time = cp.start_time;
 	last_time = cp.last_time;
 	counter = cp.counter;
+	exited = cp.exited;
+	done = cp.done;
 }
 
 gpiopin::gpiopin(uint _impulse_usec, uint _period_usec, int _pin)
 	: done(false)
+	, exited(false)
 	, cur_case(ONE)
 	, counter(0)
+	, start_time(0)
+	, last_time(0)
 {
 	impulse_usec = _impulse_usec;
 	period_usec = _period_usec;
@@ -75,6 +110,8 @@ void gpio::gpiopin::run()
 {
 	int64_t tm1, tm2;
 	int id;
+	exited = false;
+	done = false;
 	while(!done){
 		tm1 = get_curtime_usec();
 		switch (cur_case) {
@@ -93,6 +130,7 @@ void gpio::gpiopin::run()
 		cout << "pin[" << pin << "] id[" << id << "]: " << tm2 - tm1 << " usec    counter[" << counter << "]\n";
 		counter++;
 	}
+	exited = true;
 }
 
 uint gpiopin::getPeriod() const
@@ -183,6 +221,14 @@ bool gpiowork::open_pin(int pin, float impulse, float meandr)
 	return true;
 }
 
+void gpiowork::close(int pin)
+{
+	if(m_mappin.find(pin) == m_mappin.end()){
+		return;
+	}
+	m_mappin[pin].done = true;
+}
+
 void gpiowork::close()
 {
 	m_done = true;
@@ -215,6 +261,15 @@ void gpiowork::check_pins()
 
 void gpiowork::control_pins()
 {
+	for(auto it = m_mappin.begin(); it != m_mappin.end(); it++){
+		gpiopin& pin = it->second;
+		if(pin.exited){
+			it = m_mappin.erase(it);
+		}else{
+			if(get_curtime_msec() > pin.last_time)
+				pin.done = true;
+		}
+	}
 	/// empty
 }
 
@@ -226,10 +281,16 @@ void gpiowork::handler_signal()
 	const sc::StructControls &sc = m_control_module->control_params();
 
 	int pin = sc.servo_ctrl.pin;
+	float imp = get_impulse(sc.servo_ctrl.angle);
+	float meandr = sc.servo_ctrl.freq_meandr;
+
 	if(m_mappin.find(pin) == m_mappin.end()){
-		return;
+		open_pin(pin, imp, meandr);
 	}
 
 	gpiopin &gpin = m_mappin[pin];
 
+	gpin.set_data(imp, meandr);
+	gpin.start_time = get_curtime_msec();
+	gpin.last_time = gpin.start_time + sc.servo_ctrl.timework_ms;
 }

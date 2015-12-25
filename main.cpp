@@ -31,8 +31,8 @@ int main()
 	boost::thread thr_cwrk(boost::bind(&compasswork::run, &cwork));
 	boost::thread thr_bwrk(boost::bind(&barowork::run, &bwork));
 
-	gpiowrk.open_pin(11, 1.5, 50);
-	gpiowrk.open_pin(12, 1.1, 500);
+	//gpiowrk.open_pin(11, 1.5, 50);
+	//gpiowrk.open_pin(12, 1.1, 500);
 
 	//_msleep(2000);
 	//cm.set_address("0.0.0.0", 8888);
