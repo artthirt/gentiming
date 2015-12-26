@@ -50,6 +50,8 @@ endif()
 
 target_link_libraries(gentiming ${LIBS} -lboost_system -lboost_thread rt -lpthread)
 
+set(WITHOUT_QT on CACHE BOOL "without qt" FORCE)
+
 if(WITHOUT_QT)
 	message(STATUS "qt off")
 	add_definitions(-DWITHOUT_QT)
