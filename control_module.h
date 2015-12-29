@@ -31,8 +31,6 @@ public:
 
 	void run();
 
-	std::vector< char > packet() const;
-
 	sc::StructGyroscope config_gyroscope() const;
 	sc::StructControls control_params() const;
 	/**
@@ -83,13 +81,12 @@ protected:
 	void send_data();
 	void write_handler(const boost::system::error_code& error, // Result of operation.
 					   std::size_t bytes_transferred);
-	void analyze_data();
+	void analyze_data(const	std::vector< char >& packet);
 
 private:
 	std::string m_host;
 	ushort m_port;
 	std::vector< char > m_buffer;
-	std::vector< char > m_packet;
 	bool m_done;
 	sc::StructControls m_sc;
 	sc::StructControls m_last_sc;

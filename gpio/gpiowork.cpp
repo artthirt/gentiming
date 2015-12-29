@@ -50,11 +50,13 @@ gpiopin::gpiopin()
 	, counter(0)
 	, start_time(0)
 	, last_time(0)
+	, is_init(false)
 {
 
 }
 
 gpiopin::gpiopin(const gpiopin &cp)
+	: is_init(false)
 {
 	impulse_usec = cp.impulse_usec;
 	period_usec = cp.period_usec;
@@ -74,6 +76,7 @@ gpiopin::gpiopin(uint _impulse_usec, uint _period_usec, int _pin)
 	, counter(0)
 	, start_time(0)
 	, last_time(0)
+	, is_init(false)
 {
 	impulse_usec = _impulse_usec;
 	period_usec = _period_usec;
@@ -113,22 +116,26 @@ void gpio::gpiopin::run()
 	exited = false;
 	done = false;
 	while(!done){
-		tm1 = get_curtime_usec();
-		switch (cur_case) {
-			case ONE:
-				set_one();
-				id = 1;
-				break;
-			case ZERO:
-			default:
-				set_zero();
-				id = 0;
-				break;
+		if(is_init){
+			tm1 = get_curtime_usec();
+			switch (cur_case) {
+				case ONE:
+					set_one();
+					id = 1;
+					break;
+				case ZERO:
+				default:
+					set_zero();
+					id = 0;
+					break;
+			}
+			swap_case();
+			tm2 = get_curtime_usec();
+			cout << "pin[" << pin << "] id[" << id << "]: " << tm2 - tm1 << " usec    counter[" << counter << "]\n";
+			counter++;
+		}else{
+			_msleep(100);
 		}
-		swap_case();
-		tm2 = get_curtime_usec();
-		cout << "pin[" << pin << "] id[" << id << "]: " << tm2 - tm1 << " usec    counter[" << counter << "]\n";
-		counter++;
 	}
 	exited = true;
 }
@@ -206,11 +213,11 @@ gpiowork::gpiowork()
 
 }
 
-bool gpiowork::open_pin(int pin, float impulse, float meandr)
+bool gpiowork::open_pin(int pin, float impulse, float meandr, bool init)
 {
 	if(m_mappin.find(pin) == m_mappin.end()){
 		m_mappin[pin] = gpiopin(impulse * usec_in_msec, meandr * usec_in_msec, pin);
-
+		m_mappin[pin].is_init = init;
 		m_mappin[pin].thread = thread(boost::bind(&gpiopin::run, &m_mappin[pin]));
 
 	}else{
@@ -260,7 +267,7 @@ void gpiowork::control_pins()
 		if(pin.exited){
 			it = m_mappin.erase(it);
 		}else{
-			if(get_curtime_msec() > pin.last_time)
+			if(pin.is_init && get_curtime_msec() > pin.last_time)
 				pin.done = true;
 		}
 	}
@@ -274,12 +281,14 @@ void gpiowork::handler_signal(const StructControls &sc)
 	float meandr = sc.servo_ctrl.freq_meandr;
 
 	if(m_mappin.find(pin) == m_mappin.end()){
-		open_pin(pin, imp, meandr);
+		open_pin(pin, imp, meandr, false);
 	}
 
 	gpiopin &gpin = m_mappin[pin];
 
 	gpin.set_data(imp, meandr);
+	gpin.is_init = false;
 	gpin.start_time = get_curtime_msec();
 	gpin.last_time = gpin.start_time + sc.servo_ctrl.timework_ms;
+	gpin.is_init = true;
 }

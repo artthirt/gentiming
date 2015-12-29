@@ -103,11 +103,6 @@ void control_module::run()
 	cout << "control_module stop\n";
 }
 
-std::vector<char> control_module::packet() const
-{
-	return m_packet;
-}
-
 void control_module::handleReceive(const boost::system::error_code &error, size_t size)
 {
 	size_t available = m_socket->available();
@@ -115,18 +110,19 @@ void control_module::handleReceive(const boost::system::error_code &error, size_
 
 	size_t packetSize = m_socket->receive_from(boost::asio::buffer(m_buffer, available), m_remote_endpoint);
 
-	m_packet.resize(packetSize);
-	std::copy(m_buffer.begin(), m_buffer.begin() + packetSize, m_packet.begin());
+	std::vector< char > packet;
+	packet.resize(packetSize);
+	std::copy(m_buffer.begin(), m_buffer.begin() + packetSize, packet.begin());
 
 	stringstream ss;
 	for(size_t i = 0; i < std::min(packetSize, (size_t)10); i++){
-		ss << (uint)m_packet[i] << ", ";
+		ss << (uint)packet[i] << ", ";
 	}
 
-	analyze_data();
+	analyze_data(packet);
 
 	cout << "byte received: " << packetSize << "; error code: " << error;
-	cout << "; packet size: " << m_packet.size() << " data: [" << ss.str() << "..]" << endl;
+	cout << "; packet size: " << packet.size() << " data: [" << ss.str() << "..]" << endl;
 	start_receive();
 }
 
@@ -156,12 +152,12 @@ void control_module::write_handler(const boost::system::error_code &error, size_
 	cout << "bytes send: " << bytes_transferred << endl;
 }
 
-void control_module::analyze_data()
+void control_module::analyze_data(const std::vector<char> &packet)
 {
-	datastream stream(m_packet);
+	datastream stream(packet);
 	char symb[5] = { 0 };
-	if(m_packet.size() < 6){
-		std::string ssymb(m_packet.data());
+	if(packet.size() < 6){
+		std::string ssymb(packet.data());
 		if(ssymb == "START"){
 			m_start_send = true;
 			return;
