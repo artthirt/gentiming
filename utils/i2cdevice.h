@@ -114,6 +114,7 @@ private:
 	static I2CInstance m_instance;
 
 	std::map< std::string, Device > m_devices;
+	std::mutex m_mutex;
 };
 
 /**

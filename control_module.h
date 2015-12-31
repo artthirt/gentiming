@@ -5,10 +5,15 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <atomic>
+#include <stdio.h>
+#include <unistd.h>
+#include <time.h>
 
 #include "struct_controls/struct_controls.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/deadline_timer.hpp>
 #include <boost/array.hpp>
 #include <boost/signals2.hpp>
 
@@ -83,6 +88,11 @@ protected:
 					   std::size_t bytes_transferred);
 	void analyze_data(const	std::vector< char >& packet);
 
+	void start_timer();
+	void handler_timer();
+
+	friend void timer_handler(sigval_t sv);
+
 private:
 	std::string m_host;
 	ushort m_port;
@@ -94,7 +104,12 @@ private:
 	sc::StructGyroscope m_config_gyroscope;
 	std::mutex m_mutex;
 	int64_t m_last_send_data;
-	bool m_start_send;
+	std::atomic<bool> m_start_send;
+	std::atomic_bool m_is_data_update;
+	int m_delay;
+
+	struct sigevent         m_event;
+	timer_t                 m_timer_id;
 
 	boost::asio::ip::udp::socket *m_socket;
 	boost::asio::ip::udp::endpoint m_remote_endpoint;

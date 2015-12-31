@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+#include "utils.h"
+
 /////////////////////////////////////////////
 
 std::mutex Device::m_mutex;
@@ -148,21 +150,27 @@ I2CInstance I2CInstance::m_instance;
 
 Device *I2CInstance::open(const std::string& sdev)
 {
+	m_mutex.lock();
 	if(m_devices.find(sdev) != m_devices.end()){
+		m_mutex.unlock();
 		return &m_devices[sdev];
 	}
 	m_devices[sdev] = Device(sdev);
 	if(m_devices[sdev].open()){
+		_msleep(5);
+		m_mutex.unlock();
 		return &m_devices[sdev];
-	}else{
-		return 0;
 	}
+	m_mutex.unlock();
+	return 0;
 }
 
 void I2CInstance::close(const std::string &sdev)
 {
 	if(m_devices.find(sdev) != m_devices.end()){
+		m_mutex.lock();
 		m_devices[sdev].close();
+		m_mutex.unlock();
 	}
 }
 
@@ -205,8 +213,11 @@ bool I2CDevice::is_opened() const
 
 bool I2CDevice::open(u_char addr, bool tenbits)
 {
-	if(addr == UNKNOWN || m_addr == addr)
+	if(addr == UNKNOWN)
 		return false;
+
+	if(m_addr == addr)
+		return true;
 
 	m_i2cdev = I2CInstance::instance().open(m_device);
 

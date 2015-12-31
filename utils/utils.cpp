@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <sstream>
 
 using namespace std;
 
@@ -29,4 +30,21 @@ void _msleep(uint msec)
 	tm.tv_nsec = (msec * nsec_in_usec * usec_in_msec) % (uint)1e+9;
 	tm.tv_sec = (msec) / msec_in_sec;
 	clock_nanosleep(CLOCK_MONOTONIC, 0, &tm, 0);
+}
+
+void show_nbytes(const std::vector<u_char> &packet, size_t len)
+{
+	stringstream ss;
+	for(size_t i = 0; i < std::min(len, len); i++){
+		ss << (uint)packet[i] << ", ";
+	}
+	std::cout << "data[" << ss.str() << "]" << std::endl;
+}
+
+timespec get_from_ms(u_int ms)
+{
+	timespec res;
+	res.tv_nsec = (ms * 1000000) % 1000000000;
+	res.tv_sec = ms / 1000;
+	return res;
 }

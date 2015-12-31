@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <time.h>
+#include <vector>
 
 /////////////////////////////////////
 
@@ -36,5 +37,9 @@ std::int64_t get_curtime_usec();
 std::int64_t get_curtime_msec();
 void _usleep(uint usec);
 void _msleep(uint msec);
+
+timespec get_from_ms(u_int ms);
+
+void show_nbytes(const std::vector< u_char >& packet, size_t len);
 
 #endif // UTILS_H

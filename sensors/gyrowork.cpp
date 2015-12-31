@@ -75,7 +75,9 @@ void gyrowork::get_data()
 
 	for(int i = 0; i < 7/*data_out.size()*/; i++){
 		data[i] = static_cast<short>((data_out[i] << 8) | (data_out[i] >> 8));
+		//std::cout << data[i] << ", ";
 	}
+	//std::cout << std::endl;
 
 	if(m_control_module){
 		m_control_module->set_gyroscope(Vector3i(data[4], data[5], data[6]),

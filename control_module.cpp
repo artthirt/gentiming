@@ -12,8 +12,24 @@
 using namespace std;
 using namespace boost::asio::ip;
 
-const int delay_timer = 5;					/// in milliseconds
+const int delay_timer = 10;					/// in milliseconds
 const int64_t minimum_delay_for_send = 1;	/// in milliseconds
+
+//////////////////////////////////////////////////
+
+void timer_handler(sigval_t sv)
+{
+	//long tm = get_curtime_usec();
+	control_module* cm = static_cast< control_module* >(sv.sival_ptr);
+	if(cm){
+		cm->handler_timer();
+	}
+//	static long time_last = 0;
+//	std::cout << tm - time_last << endl;
+//	time_last = tm;
+}
+
+//////////////////////////////////////////////////
 
 control_module::control_module()
 	: m_host("0.0.0.0")
@@ -21,23 +37,29 @@ control_module::control_module()
 	, m_socket(0)
 	, m_done(false)
 	, m_start_send(false)
+	, m_delay(delay_timer)
+	, m_is_data_update(false)
 {
-//	datastream stream(&m_packet);
+//	std::vector< char > packet;
+//	datastream stream(&packet);
 
 //	m_sc.bank = 45;
 //	m_sc.servo_ctrl.flag_start = true;
 //	m_sc.tangaj = 30;
 //	m_sc.power_on = true;
 //	m_sc.servo_ctrl.pin = 3;
+//	sc::StructTelemetry s1;
+//	s1.compass.data = vector3_::Vector3i(1, 2, 3);
 
-//	m_sc.write_to(stream);
+//	s1.write_to(stream);
 
+//	sc::StructTelemetry scc;
 //	sc::StructControls scc;
 
-//	datastream ostream(m_packet);
+//	datastream ostream(packet);
 //	scc.read_from(ostream);
 
-//	cout << "size sc " << m_packet.size() << "\n";
+//	cout << "size sc " << packet.size() << "\n";
 }
 
 control_module::~control_module()
@@ -98,6 +120,8 @@ void control_module::run()
 
 	m_last_send_data = get_curtime_msec();
 
+	start_timer();
+
 	m_io.run();
 
 	cout << "control_module stop\n";
@@ -131,31 +155,21 @@ void control_module::send_data()
 	if(!m_start_send)
 		return;
 
-	int64_t elapsed = get_curtime_msec();
-	if(elapsed - m_last_send_data < minimum_delay_for_send){
-		return;
-	}
-	m_last_send_data = elapsed;
-
-	std::vector< char > data;
-	datastream stream(&data);
-	m_data_send.write_to(stream);
-
-	m_socket->async_send_to(boost::asio::buffer(data), m_remote_endpoint,
-									 boost::bind(&control_module::write_handler, this,
-												 boost::asio::placeholders::error,
-												 boost::asio::placeholders::bytes_transferred));
+	m_is_data_update = true;
 }
 
 void control_module::write_handler(const boost::system::error_code &error, size_t bytes_transferred)
 {
-	cout << "bytes send: " << bytes_transferred << endl;
+	if(error != 0){
+		cout << m_remote_endpoint.address().to_string() << " " << m_remote_endpoint.port() << endl;
+		cout << "bytes send: " << bytes_transferred << "; error: " << error << endl;
+	}
 }
 
 void control_module::analyze_data(const std::vector<char> &packet)
 {
 	datastream stream(packet);
-	char symb[5] = { 0 };
+	char symb[6] = { 0 };
 	if(packet.size() < 6){
 		std::string ssymb(packet.data());
 		if(ssymb == "START"){
@@ -177,12 +191,52 @@ void control_module::analyze_data(const std::vector<char> &packet)
 	}
 }
 
+void control_module::start_timer()
+{
+	int res = 0;
+	std::fill((char*)&m_event, (char*)&m_event + sizeof(m_event), '\0');
+	m_event.sigev_value.sival_ptr = this;
+	m_event.sigev_notify = SIGEV_THREAD;
+	m_event.sigev_notify_function = timer_handler;
+	res = timer_create(CLOCK_MONOTONIC, &m_event, &m_timer_id);
+	cout << "timer_create: " << res << endl;
+
+	struct itimerspec tm = { get_from_ms(m_delay), get_from_ms(m_delay) };
+	//tm.it_interval.tv_nsec = (long)(m_delay * (1e+3)) % (long)1e+9;
+	//tm.it_interval.tv_sec = m_delay / 1000;
+	res = timer_settime(m_timer_id, 0, &tm, 0);
+	cout << "timer_settime: " << res << endl;
+}
+
+void control_module::handler_timer()
+{
+	if(m_is_data_update){
+		if(!m_remote_endpoint.port()){
+			m_is_data_update = false;
+			return;
+		}
+
+		std::vector< char > data;
+		datastream stream(&data);
+		m_data_send.write_to(stream);
+
+		m_socket->async_send_to(boost::asio::buffer(data), m_remote_endpoint,
+										 boost::bind(&control_module::write_handler, this,
+													 boost::asio::placeholders::error,
+													 boost::asio::placeholders::bytes_transferred));
+
+		m_is_data_update = false;
+	}
+}
+
 void control_module::start_receive()
 {
-	m_socket->async_receive_from(boost::asio::null_buffers(), m_remote_endpoint,
+	boost::asio::ip::udp::endpoint remote_endpoint;
+	m_socket->async_receive_from(boost::asio::null_buffers(), remote_endpoint,
 								 boost::bind(&control_module::handleReceive, this,
 											 boost::asio::placeholders::error,
 											 boost::asio::placeholders::bytes_transferred));
+	//cout << remote_endpoint.address().to_string() << " " << remote_endpoint.port() << endl;
 }
 
 sc::StructControls control_module::control_params() const
