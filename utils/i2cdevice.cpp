@@ -13,8 +13,6 @@
 
 /////////////////////////////////////////////
 
-std::mutex Device::m_mutex;
-
 Device::Device()
 {
 	m_ref = 0;
@@ -46,9 +44,7 @@ bool Device::open()
 		addRef();
 		return true;
 	}
-	m_mutex.lock();
 	m_dev = ::open(m_name.c_str(), O_RDWR);
-	m_mutex.unlock();
 
 	if(m_dev != -1){
 		addRef();
@@ -70,9 +66,7 @@ void Device::close()
 	m_ref--;
 	std::cout << "close. ref=" << m_ref << std::endl;
 	if(m_ref <= 0){
-		m_mutex.lock();
 		::close(m_dev);
-		m_mutex.unlock();
 		std::cout << "device '" << m_name << "' closed" << std::endl;
 		m_ref = 0;
 		m_dev = 0;
@@ -87,17 +81,13 @@ int Device::dev() const
 
 int Device::set_addr(unsigned char addr)
 {
-	m_mutex.lock();
 	int res = ioctl(m_dev, I2C_SLAVE, addr);
-	m_mutex.unlock();
 	return res;
 }
 
 int Device::set_param(int param, int value)
 {
-	m_mutex.lock();
 	int res = ioctl(m_dev, param, value);
-	m_mutex.unlock();
 	return res;
 }
 
@@ -112,9 +102,7 @@ int Device::write(unsigned char addr, unsigned char *data, int len)
 		std::copy(data, data + len, &m_write_data[1]);
 	}
 
-	m_mutex.lock();
 	int res = ::write(m_dev, &m_write_data.front(), m_write_data.size());
-	m_mutex.unlock();
 
 	return res;
 }
@@ -123,13 +111,9 @@ int Device::read(unsigned char addr, unsigned char *data, int len)
 {
 	if(!m_dev || !data || !len)
 		return -1;
-	m_mutex.lock();
 	int res = ::write(m_dev, &addr, 1);
-	m_mutex.unlock();
 	if(res >= 0){
-		m_mutex.lock();
 		res = ::read(m_dev, data, len);
-		m_mutex.unlock();
 	}
 	return res;
 }
@@ -150,27 +134,21 @@ I2CInstance I2CInstance::m_instance;
 
 Device *I2CInstance::open(const std::string& sdev)
 {
-	m_mutex.lock();
 	if(m_devices.find(sdev) != m_devices.end()){
-		m_mutex.unlock();
 		return &m_devices[sdev];
 	}
 	m_devices[sdev] = Device(sdev);
 	if(m_devices[sdev].open()){
 		_msleep(5);
-		m_mutex.unlock();
 		return &m_devices[sdev];
 	}
-	m_mutex.unlock();
 	return 0;
 }
 
 void I2CInstance::close(const std::string &sdev)
 {
 	if(m_devices.find(sdev) != m_devices.end()){
-		m_mutex.lock();
 		m_devices[sdev].close();
-		m_mutex.unlock();
 	}
 }
 
@@ -180,6 +158,8 @@ I2CInstance &I2CInstance::instance()
 }
 
 /////////////////////////////////////////////
+
+std::mutex I2CDevice::m_mutex;
 
 I2CDevice::I2CDevice(std::string device/* = "/dev/i2c-1"*/, u_char dev/* = UNKNOWN*/, bool tenbits/* = false*/)
 	: m_i2cdev(0)
@@ -219,22 +199,30 @@ bool I2CDevice::open(u_char addr, bool tenbits)
 	if(m_addr == addr)
 		return true;
 
+	m_mutex.lock();
+
 	m_i2cdev = I2CInstance::instance().open(m_device);
 
-	if(!m_i2cdev)
+	if(!m_i2cdev){
+		m_mutex.unlock();
 		return false;
+	}
 
 	m_addr = addr;
 
 	u_char res = 0;
 	res = m_i2cdev->set_param(I2C_TENBIT, tenbits);
 
+	m_mutex.unlock();
+
 	return m_i2cdev->is_opened();
 }
 
 void I2CDevice::close()
 {
+	m_mutex.lock();
 	I2CInstance::instance().close(m_device);
+	m_mutex.unlock();
 	m_i2cdev = 0;
 }
 
@@ -245,9 +233,12 @@ int I2CDevice::write(u_char addr, u_char data[], int count)
 
 	int res = 0;
 
-	res = m_i2cdev->set_addr(m_addr);
+	m_mutex.lock();
 
+	res = m_i2cdev->set_addr(m_addr);
 	res = m_i2cdev->write(addr, data, count);
+
+	m_mutex.unlock();
 	//std::cout << "write. addr=" << (int)m_addr << " res=" << res << std::endl;
 	return res;
 }
@@ -257,9 +248,12 @@ int I2CDevice::read(u_char addr, u_char data[], int count)
 	if(!m_i2cdev)
 		return -1;
 	int res = 0;
-	res = m_i2cdev->set_addr(m_addr);
+	m_mutex.lock();
 
+	res = m_i2cdev->set_addr(m_addr);
 	res = m_i2cdev->read(addr, data, count);
+
+	m_mutex.unlock();
 	//std::cout << "read. addr=" << (int)m_addr << " res=" << res << std::endl;
 	return res;
 }

@@ -82,7 +82,6 @@ private:
 	int m_ref;
 	std::string m_name;
 	std::vector< u_char > m_write_data;
-	static std::mutex m_mutex;
 	bool m_opened;
 
 	mutable int m_dev;
@@ -114,7 +113,6 @@ private:
 	static I2CInstance m_instance;
 
 	std::map< std::string, Device > m_devices;
-	std::mutex m_mutex;
 };
 
 /**
@@ -156,6 +154,7 @@ private:
 	Device* m_i2cdev;
 	u_char m_addr;
 	std::string m_device;
+	static std::mutex m_mutex;
 };
 
 #endif // I2CDEVICE_H

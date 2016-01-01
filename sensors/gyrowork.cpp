@@ -78,6 +78,9 @@ void gyrowork::get_data()
 		//std::cout << data[i] << ", ";
 	}
 	//std::cout << std::endl;
+//	static int64_t prev = 0;
+//	std::cout << tick - prev << " " << data[1] << " " << res << std::endl;
+//	prev = tick;
 
 	if(m_control_module){
 		m_control_module->set_gyroscope(Vector3i(data[4], data[5], data[6]),
